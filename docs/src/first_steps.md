@@ -188,6 +188,7 @@ p = plot(
     size=(1000, 1000)
 )
 ```
+![](img/kappa_func_first_steps.png)
 
 ``` Julia
 upred_nn = [nnsetup.re_u(nnsetup.θ_u)([x,y])[1] for y in ys, x in xs]
@@ -206,6 +207,8 @@ p = plot(
     size=(1000, 1000)
 )
 ```
+
+![](img/u_func_first_steps.png)
 
 ### Citations
 

@@ -10,9 +10,15 @@ makedocs(
     "Home" => "index.md",
     "What are FEINNs?" => "feinn_introduction.md",
     "Tutorials" => [
-         "first_steps.md",
+         "First steps" => "first_steps.md",
          ],
-    "API" => "api.md"
+    "API" => "api.md",
+    "Citations" => "citations.md"
      ],
     remotes = nothing,
  )
+
+deploydocs(
+    repo = "github.com/garethmarkel/FiniteElementChains.jl.git",
+    devbranch = "main",
+)
