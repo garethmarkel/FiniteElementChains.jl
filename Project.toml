@@ -1,0 +1,30 @@
+name = "FiniteElementChains"
+uuid = "e90510a5-7fbe-4f9a-8cfe-9f910f373bc0"
+authors = ["garethmarkelmarkel "]
+version = "0.1.0"
+
+[deps]
+ChainRules = "082447d4-558c-5d27-93f4-14fc19e9eca2"
+DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
+Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
+ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
+Gridap = "56d4f2e9-7ea1-5844-9cf6-b9c51ca7ce8e"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+Optim = "429524aa-4258-5aef-a3af-852621145aeb"
+Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
+Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
+
+[compat]
+ChainRules = "1.73.0"
+DelimitedFiles = "1.9.1"
+Distributions = "0.25.126"
+Documenter = "1.17.0"
+Flux = "0.16.10"
+ForwardDiff = "1.4.1"
+Gridap = "0.20.8"
+LinearAlgebra = "1.11.0"
+Optim = "1.13.3"
+Plots = "1.41.6"
+Zygote = "0.7.11"
