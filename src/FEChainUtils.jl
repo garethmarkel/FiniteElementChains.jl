@@ -43,11 +43,21 @@ function assemble_vector(dc::DomainContribution, assem::SparseMatrixAssembler, V
     return vec
 end
 
+"""
+    get_cell_ids_field(Ω::Triangulation) -> CellField
 
+Gets the node ids for each cell 
+"""
 function get_cell_ids_field(Ω)
     return CellField(collect(1:num_cells(Ω)), Ω)
 end
 
+
+"""
+    get_dof_map(U::FESpace,cell_ids_field::CellField,known_coords::AbstractArray)
+
+Gets the cell ids for each coordinates
+"""
 function get_dof_map(U::FESpace,cell_ids_field::CellField,known_coords::AbstractArray)
     return lazy_map(x -> U.space.cell_dofs_ids[cell_ids_field(x)], known_coords)
 end
