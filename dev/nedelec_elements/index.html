@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Electromagnetics &amp; FEINNs · FiniteElementChains.jl</title><meta name="title" content="Electromagnetics &amp; FEINNs · FiniteElementChains.jl"/><meta property="og:title" content="Electromagnetics &amp; FEINNs · FiniteElementChains.jl"/><meta property="twitter:title" content="Electromagnetics &amp; FEINNs · FiniteElementChains.jl"/><meta name="description" content="Documentation for FiniteElementChains.jl."/><meta property="og:description" content="Documentation for FiniteElementChains.jl."/><meta property="twitter:description" content="Documentation for FiniteElementChains.jl."/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.png" alt="FiniteElementChains.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../">FiniteElementChains.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../feinn_introduction/">What are FEINNs?</a></li><li><span class="tocitem">Tutorials</span><ul><li><a class="tocitem" href="../first_steps/">First steps</a></li><li><a class="tocitem" href="../loss_functions/">Loss functions</a></li><li><a class="tocitem" href="../moment_based_elements/">Working with moment based elements</a></li><li class="is-active"><a class="tocitem" href>Electromagnetics &amp; FEINNs</a></li></ul></li><li><a class="tocitem" href="../api/">API</a></li><li><a class="tocitem" href="../citations/">Citations</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Tutorials</a></li><li class="is-active"><a href>Electromagnetics &amp; FEINNs</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Electromagnetics &amp; FEINNs</a></li></ul></nav><div class="docs-right"><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h3 id="Introduction"><a class="docs-heading-anchor" href="#Introduction">Introduction</a><a id="Introduction-1"></a><a class="docs-heading-anchor-permalink" href="#Introduction" title="Permalink"></a></h3><p>This notebook demonstrates how to fit a finite element interpolated neural network (FEINN) to an inverse electromagnetics problem with sparse, noisy measurements.</p><h3 id="Setup"><a class="docs-heading-anchor" href="#Setup">Setup</a><a id="Setup-1"></a><a class="docs-heading-anchor-permalink" href="#Setup" title="Permalink"></a></h3><p>First, activate the environment and load the required libraries.</p><pre><code class="language-Julia hljs">using Pkg
+Pkg.activate(&quot;.&quot;)
+
+using FiniteElementChains
+using Gridap
+using Flux
+using Gridap.FESpaces
+using Gridap.ReferenceFEs
+using Gridap.Arrays
+using Gridap.Geometry
+using Gridap.Fields
+using Gridap.CellData
+using Gridap.Algebra
+using Zygote
+using LinearAlgebra
+using ForwardDiff
+using Distributions
+using ChainRules
+using Plots
+using DelimitedFiles
+using Optim</code></pre><p>Next, we&#39;ll set up our test solution. For this problem, the true state and diffusion coefficient are given by:</p><p>\begin{equation}     u(x,y) = [cos(\pi x)cos(\pi y),sin(\pi x)sin(\pi y)], \ \kappa (x) = \frac{1}{1 + x^2 + y^2 + (x-1)^2 + (y-1)^2} \end{equation}</p><p>The underlying physics are represented by the variable coefficient poisson equation:</p><p>\begin{equation}     \nabla \times \nabla \times u + \kappa u = f \text{ in } \Omega, \qquad u \times n = g \text{ on } \Gamma_D = \partial\Omega. \end{equation}</p><p>The domain is given by <span>$[0,1]^2$</span> and is split into 50x50 quadrilaterals. This is the problem used in section 3.3.2 of Badia et al (2025).</p><p>For this problem, we&#39;ll assume we can observe the true state at 900 points inside the domain, contaminated with Gaussian noise. </p><pre><code class="language-Julia hljs">π2 = π^2
+
+# Manufactured solution
+E_exact((x,y)) = VectorValue(
+    cos(π*x)*cos(π*y),
+    sin(π*x)*sin(π*y)
+)
+
+kappa((x,y)) = 1/(1 + x^2 + y^2 + (x-1)^2 + (y-1)^2)
+
+Res_exact((x,y)) = VectorValue(
+    0.0,
+    0.0
+)</code></pre><p>Below, we&#39;ll set up our problem using Gridap. Notice we instantiate spaces for both <span>$\kappa (x)$</span>, and for <span>$u (x)$</span>.</p><pre><code class="language-Julia hljs">domain = (0,1,0,1)
+partition = (50,50)
+model = CartesianDiscreteModel(domain, partition)
+order = 1
+
+Ω = Triangulation(model)
+dΩ = Measure(Ω, 4)
+
+
+# set up for the u function
+reffe = ReferenceFE(nedelec, order - 1)
+V = TestFESpace(
+    model,
+    reffe;
+    conformity=:HCurl,
+    dirichlet_tags=&quot;boundary&quot;
+)
+U = TrialFESpace(V, E_exact)  # MMS boundary data
+assem = SparseMatrixAssembler(U,V)
+
+# set up for the kappa function
+reffek = ReferenceFE(lagrangian, order)
+V2 = TestFESpace(
+    model,
+    reffek;
+    conformity=:H1
+)
+U2 = TrialFESpace(V2)
+assem_k = SparseMatrixAssembler(U2,V2)
+
+# useful residual space
+Ures = TrialFESpace(V, Res_exact)  
+
+
+# set up overall problem
+J(x) = (2*π2 + kappa(x)) * E_exact(x)
+resfunc(k,u,v) = ∫(curl(u) ⋅ curl(v) + k*(u ⋅ v) - J ⋅ v) * dΩ
+v_fef = get_fe_basis(V)
+resfunc_ku(k,u) = resfunc(k,u,v_fef)
+</code></pre><p>We&#39;re working with Nedelec elements here. since these degrees of freedom are based on an integral, we need different machinery to work with them compared to a FEINN problem with Lagrangian elements. This package defines a struct called a <code>MomentBasedElementTools</code> to deal with those.</p><pre><code class="language-Julia hljs">momentbasedinfo, interior_coords = MomentBasedElementTools(V, Ω)</code></pre><p>Now, let&#39;s extract 900 sensor locations, predict their true values, and contaminate them with gaussian noise.</p><pre><code class="language-Julia hljs"># extract 64 sensor locations, assign them a gaussian noise sensor reading
+xpt = collect(range(0.005, 0.995; length=30))
+ypt = collect(range(0.005, 0.995; length=30))
+known_coords = [Gridap.Point([i,j]) for i in xpt for j in ypt]
+
+noise = 1 .+ 0.05 .* randn(30*30)
+known_values = reshape(reinterpret(Float64,E_exact.(known_coords) .* noise),2,length(known_coords))&#39;
+
+# set interior and all nodes
+all_coords = V2.fe_dof_basis.trian.grid.node_coords
+all_coords = [get_array(i) for i in all_coords]</code></pre><p>Finally, let&#39;s instantiate the structs that will be used to fit our FEINN.</p><pre><code class="language-Julia hljs">U_kap_coords = get_coord_mat(all_coords)
+U_u_coords = get_coord_mat(interior_coords)
+
+pdesetup = PDESetup(U,U2,assem,assem_k,U_u_coords,U_kap_coords)
+sensordata = SensorData(V,known_values,known_coords)
+nnsetup = initialize_networks(2,[2,1],2,50,softplus,rect_abs)
+
+d_used = [1,2] # which dimensions of the simulated field are used
+</code></pre><h3 id="Setting-up-the-loss-function"><a class="docs-heading-anchor" href="#Setting-up-the-loss-function">Setting up the loss function</a><a id="Setting-up-the-loss-function-1"></a><a class="docs-heading-anchor-permalink" href="#Setting-up-the-loss-function" title="Permalink"></a></h3><p>Loss functions exert significant influence over the quality of the final trained model. In this problem, we use the L2 loss of the Riesz representative of the residual vector. We define this using the following snippet.</p><pre><code class="language-Julia hljs"># extract the gram matrix for the problem
+a_gram(u,v) = ∫( u ⋅ v + curl(u) ⋅ curl(v) ) * dΩ
+M_gram = assemble_matrix(a_gram, Ures, V)
+M_gram_fact = cholesky(M_gram)
+
+losseval = LossSetup(riesz_transformed_loss, M_gram_fact, 2)</code></pre><p>Check out our other tutorials for more details on how loss functions are constructed in FiniteElementChains.jl and what levers are available to pull.</p><h3 id="Training-the-models"><a class="docs-heading-anchor" href="#Training-the-models">Training the models</a><a id="Training-the-models-1"></a><a class="docs-heading-anchor-permalink" href="#Training-the-models" title="Permalink"></a></h3><p>To train the FEINN, simply call train_feinn!. This will modify the parameters in <code>nnsetup</code> in place. The models are trained using BFGS and Optim.jl. Typically, we train these models in three stages–first, training the <span>$u(x,y)$</span> network to minimize data fitting error as a &quot;Warm start,&quot; then training <span>$\kappa(x,y)$</span> to minimize the FEM residual with a fixed <span>$u(x,y)$</span> network, followed by a continuation strategy where the joint data and FEM errors are minimized with increasing weight on the FEM residual.</p><p>See Badia et al (2024), Badia et al (2025) for more information on how these models are trained.</p><pre><code class="language-Julia hljs">train_feinn!([150,50,400], [0.01,0.03], resfunc_ku, nnsetup, pdesetup, sensordata,d_used,losseval,-1.0,0.0,-1.0)</code></pre><h3 id="Evaluation"><a class="docs-heading-anchor" href="#Evaluation">Evaluation</a><a id="Evaluation-1"></a><a class="docs-heading-anchor-permalink" href="#Evaluation" title="Permalink"></a></h3><p>Now, let&#39;s evaluate the results. First, we&#39;ll take the <span>$L^2(\Omega)$</span> norm of the prediction error for <span>$u (x)$</span>. Then, we&#39;ll plot the predicted results for both <span>$u$</span> and <span>$\kappa$</span>.</p><pre><code class="language-Julia hljs">
+kpredfunc, zpbk = get_predictions(
+        nnsetup.re_k, 
+        nnsetup.θ_k, 
+        pdesetup.coords_k, 
+        pdesetup.U_kap
+        )
+e = kpredfunc - kappa
+l2_error = sqrt(
+    sum(∫( e ⋅ e ) * dΩ)
+)/sqrt(sum(∫(x -&gt; E_exact(x)[1]^2 + E_exact(x)[2]^2) * dΩ))
+
+nx, ny = 100, 100
+xs = range(0, 1, length=nx)
+ys = range(0, 1, length=ny)
+
+dx = xs[2]-xs[1]
+dy = ys[2]-ys[1]
+
+xedges = range(xs[1]-dx/2, xs[end]+dx/2, length=nx+1)
+yedges = range(ys[1]-dy/2, ys[end]+dy/2, length=ny+1)
+
+function heatmap_feinn(xedges,yedges,err,title)
+    p = heatmap(
+        xedges,
+        yedges,
+        err,
+        aspect_ratio=:equal,
+        xlims=(0,1),
+        ylims=(0,1),
+        c=:hsv,
+        xlabel=&quot;x&quot;,
+        ylabel=&quot;y&quot;,
+        title=title,
+        size=(400,400),
+        margin=5Plots.mm,
+        grid=false
+    )
+    return p
+end
+
+kpred_nn = [nnsetup.re_k(nnsetup.θ_k)([x,y])[1] for y in ys, x in xs]
+kpred_feinn = [nnsetup.re_k(nnsetup.θ_k)([x,y])[1] for y in ys, x in xs]
+ktrue = [kappa([x,y]) for y in ys, x in xs]
+kerr = [abs(kappa([x,y]) - nnsetup.re_k(nnsetup.θ_k)([x,y])[1]) for y in ys, x in xs]
+
+p1 = heatmap_feinn(xedges,yedges,ktrue,&quot;True kappa(x,y)&quot;)
+p2 = heatmap_feinn(xedges,yedges,kpred_nn,&quot;Predicted kappa(x,y) (raw NN)&quot;)
+p3 = heatmap_feinn(xedges,yedges,kpred_feinn,&quot;Predicted kappa(x,y) (Interpolated NN)&quot;)
+p4 = heatmap_feinn(xedges,yedges,kerr,&quot;Prediction error (Interpolated NN)&quot;)
+
+p = plot(
+    p1, p2, p3, p4,
+    layout=(2,2),
+    size=(1000, 1000)
+)</code></pre><p><img src="../img/nedelec_kpredfunc_plot.png" alt/></p><pre><code class="language-Julia hljs">
+upredfunc, zpbu = get_predictions(
+        nnsetup.re_u, 
+        nnsetup.θ_u, 
+        pdesetup.coords_u, 
+        pdesetup.U_u, 
+        momentbasedinfo
+        )
+e = upredfunc - E_exact
+l2_error = sqrt(
+    sum(∫( e ⋅ e ) * dΩ)
+)/sqrt(sum(∫(x -&gt; E_exact(x)[1]^2 + E_exact(x)[2]^2) * dΩ))
+
+fig = Figure(size = (1000, 1000))
+
+fields = [
+    E_exact, 
+    (x) -&gt; nnsetup.re_u(nnsetup.θ_u)([x[1],x[2]]), 
+    x -&gt; upredfunc(Gridap.Point([x[1],x[2]])), 
+    x -&gt; (upredfunc(Gridap.Point([x[1],x[2]])) - E_exact(x)) 
+]
+
+titles = [&quot;True u(x,y)&quot;, &quot;Predicted u(x,y) (raw NN)&quot;, &quot;Predicted u(x,y) (Interpolated NN)&quot;, &quot;Prediction error (Interpolated NN)&quot;]
+
+for k in 1:4
+    # Compute field
+    X = Float64[]
+    Y = Float64[]
+    mag = Float64[]
+    ang = Float64[]
+    print(k)
+    for y in ys, x in xs
+        E = fields[k]((x, y))
+
+        push!(X, x)
+        push!(Y, y)
+        push!(mag, sqrt(E[1]^2 + E[2]^2))
+        push!(ang, atan(E[2], E[1]))
+    end
+
+    row = (k - 1) ÷ 2 + 1
+    col = (k - 1) % 2 + 1
+
+    g = GridLayout(fig[row, col])
+
+    ax = Axis(
+        g[1, 1],
+        title = titles[k],
+        backgroundcolor = :gray95,
+        xgridvisible = false,
+        ygridvisible = false,
+        aspect = DataAspect()
+    )
+
+    colorrng = (0,1.05)
+    if k == 4
+        colorrng = (0,maximum(mag))
+    end
+
+    sc = CairoMakie.scatter!(
+        ax,
+        X, Y,
+        marker = &#39;→&#39;,
+        rotation = ang,
+        color = mag,
+        colormap = :jet1,#Makie.Reverse(:jet1),
+        colorrange = colorrng,
+        markersize = 8
+    )
+
+    Colorbar(
+        g[1, 2],
+        sc
+    )
+
+    colsize!(g, 1, Relative(0.88))
+    colsize!(g, 2, Relative(0.12))
+end
+
+fig
+</code></pre><p><img src="../img/nedelec_upredfunc_plot.png" alt/></p><h3 id="Citations"><a class="docs-heading-anchor" href="#Citations">Citations</a><a id="Citations-1"></a><a class="docs-heading-anchor-permalink" href="#Citations" title="Permalink"></a></h3><p>[1] S. Badia, W. Li, and A. F. Martín. “Finite element interpolated neural networks for solving forward and inverse problems”. In: Computer Methods in Applied Mechanics and Engineering 418 (2024), p. 116505. doi: 10.1016/j.cma.2023.116505.</p><p>[2] S. Badia, W. Li, and A. F. Martín. “COMPATIBLE FINITE ELEMENT INTERPOLATED NEURAL NETWORKS”. In: Computer Methods in Applied Mechanics and Engineering 439 (2025), doi: 10.1016/j.cma.2025.117889.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../moment_based_elements/">« Working with moment based elements</a><a class="docs-footer-nextpage" href="../api/">API »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Monday 28 September 2026 18:41">Monday 28 September 2026</span>. Using Julia version 1.11.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
