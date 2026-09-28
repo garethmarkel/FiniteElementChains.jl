@@ -11,6 +11,9 @@ makedocs(
     "What are FEINNs?" => "feinn_introduction.md",
     "Tutorials" => [
          "First steps" => "first_steps.md",
+         "Loss functions" => "loss_functions.md",
+         "Working with moment based elements" => "moment_based_elements.md",
+         "Electromagnetics & FEINNs" => "nedelec_elements.md"
          ],
     "API" => "api.md",
     "Citations" => "citations.md"

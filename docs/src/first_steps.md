@@ -123,6 +123,8 @@ U_u_coords = get_coord_mat(interior_coords)
 cell_ids_field = get_cell_ids_field(Ω)
 dofmap = get_dof_map(U,cell_ids_field,known_coords)
 
+losseval = LossSetup(raw_residual_loss,1.0)
+
 pdesetup = PDESetup(U,U_kap,assem,assem_k,U_u_coords,U_kap_coords)
 sensordata = SensorData(known_values,known_coords,dofmap)
 nnsetup = initialize_networks()
@@ -135,7 +137,7 @@ To train the FEINN, simply call train_feinn!. This will modify the parameters in
 See Badia et al (2024) for more information on how these models are trained.
 
 ```Julia
-train_feinn!([300,100,300], [1.0,3.0], resfunc_ku, nnsetup, pdesetup, sensordata)
+train_feinn!([300,100,300], [1.0,3.0], resfunc_ku, nnsetup, pdesetup, sensordata,losseval)
 ```
 
 ### Evaluation

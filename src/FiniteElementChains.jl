@@ -26,10 +26,12 @@ include("FEChainLosses.jl")
 include("FEChainTraining.jl")
 include("FEChainNNStructure.jl")
 include("FEChainNNHelpers.jl")
+include("MomentBasedElementUtils.jl")
 
-export NNSetup, PDESetup, SensorData,
+export NNSetup, PDESetup, SensorData, MomentBasedElementTools, LossSetup,
        train_feinn!, train_on_error!, train_on_residual!, train_on_joint_loss!,
-       initialize_networks, get_coord_mat, get_cell_ids_field, get_dof_map
-       get_predictions
+       initialize_networks, get_coord_mat, get_cell_ids_field, get_dof_map,
+       get_predictions, setup_nn, rect_abs, fe_error_loss, fe_residual_loss,
+       evaluate, riesz_transformed_loss, raw_residual_loss
 
 end

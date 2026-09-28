@@ -21,17 +21,49 @@ function train_on_error!(iterations, residual_function::Function, nnsetup::NNSet
     nnsetup.θ_u .= Optim.minimizer(res)
     return res
 end
+function train_on_error!(iterations, residual_function::Function, nnsetup::NNSetup, pdesetup::PDESetup, sensordata::SensorData, momentbasedinfo::MomentBasedElementTools, d_used::T,ftol::Float64=0.0,gtol::Float64=0.0,xtol::Float64=0.0) where {T}
+    # --- STAGE 1: Data-Loss Only (Optimizing u parameters) ---
+    function fg!(F, G, w)
+        nnsetup.θ_u .= w
+        dldthetau_e, errornorm = fe_error_loss(
+            residual_function,
+            nnsetup, # neded
+            pdesetup, # needed
+            sensordata, # needed
+            momentbasedinfo,
+            d_used
+            )
+        
+        if G !== nothing
+            G .= dldthetau_e
+            return errornorm
+        end
+        if F !== nothing
+            return errornorm
+        end
+    end
+    res = Optim.optimize(Optim.only_fg!(fg!), deepcopy(nnsetup.θ_u),BFGS(), Optim.Options(
+            iterations=iterations, 
+            store_trace=true,
+            f_tol = ftol,
+            x_tol = xtol,
+            g_tol = gtol)
+        )
+    nnsetup.θ_u .= Optim.minimizer(res)
+    return res
+end
+
 
 """
     train_on_residual!(iterations, residual_function::Function, nnsetup::NNSetup, pdesetup::PDESetup, sensordata::SensorData)
 
 Trains the FEINN using the l1 norm of the FEM residual error
 """
-function train_on_residual!(iterations, residual_function::Function, nnsetup::NNSetup, pdesetup::PDESetup, sensordata::SensorData)
+function train_on_residual!(iterations, residual_function::Function, nnsetup::NNSetup, pdesetup::PDESetup, sensordata::SensorData,losseval::LossSetup)
     # --- STAGE 1: Data-Loss Only (Optimizing u parameters) ---
     function fg!(F,G,w)
         nnsetup.θ_k .= w
-        dldthetau_r, dldthetak_r, residnorm = fe_residual_loss(residual_function, nnsetup, pdesetup,sensordata)
+        dldthetau_r, dldthetak_r, residnorm = fe_residual_loss(residual_function, nnsetup, pdesetup,sensordata,losseval)
         if !isnothing(G)
             copy!(G, dldthetak_r)
             return residnorm
@@ -47,19 +79,53 @@ function train_on_residual!(iterations, residual_function::Function, nnsetup::NN
     return res
 end
 
+
+function train_on_residual!(iterations, residual_function::Function, nnsetup::NNSetup, pdesetup::PDESetup, sensordata::SensorData, momentbasedinfo::MomentBasedElementTools, losseval::T,ftol::Float64=0.0,gtol::Float64=0.0,xtol::Float64=0.0) where {T}
+    # --- STAGE 1: Data-Loss Only (Optimizing u parameters) ---
+    function fg!(F,G,w)
+        nnsetup.θ_k .= w
+        dldthetau_r, dldthetak_r, residnorm = fe_residual_loss(
+            residual_function,
+            nnsetup, # neded
+            pdesetup, # needed
+            sensordata, # needed
+            momentbasedinfo,
+            losseval
+            )
+        if !isnothing(G)
+            copy!(G, dldthetak_r)
+            return residnorm
+        end
+        if !isnothing(F)
+            return residnorm
+        end
+    end
+    
+    res = Optim.optimize(Optim.only_fg!(fg!), deepcopy(nnsetup.θ_k),BFGS(), Optim.Options(
+            iterations=iterations, 
+            store_trace=true,
+            f_tol = ftol,
+            x_tol = xtol,
+            g_tol = gtol)
+            )
+    nnsetup.θ_k .= Optim.minimizer(res)
+
+    return res
+end
+
 """
     train_on_joint_loss!(iterations, residual_function::Function, nnsetup::NNSetup, pdesetup::PDESetup, sensordata::SensorData)
 
 Trains the FEINN using the l2 norm of the data fitting error and the l1 norm of the FEM residual error, with said l1 error weighted by parameter alpha
 """
-function train_on_joint_loss!(iterations, α, residual_function::Function, nnsetup::NNSetup, pdesetup::PDESetup, sensordata::SensorData)
+function train_on_joint_loss!(iterations, α, residual_function::Function, nnsetup::NNSetup, pdesetup::PDESetup, sensordata::SensorData,losseval::LossSetup)
 
     len_u = length(nnsetup.θ_u)
     
     function fg!(F,G,w)
         nnsetup.θ_u .= view(w,1:len_u)
         nnsetup.θ_k .= view(w,(len_u + 1):length(w))
-        dldthetau_r, dldthetak_r, residnorm = fe_residual_loss(residual_function, nnsetup, pdesetup,sensordata)
+        dldthetau_r, dldthetak_r, residnorm = fe_residual_loss(residual_function, nnsetup, pdesetup,sensordata,losseval)
         dldthetau_e, errornorm = fe_error_loss(residual_function, nnsetup, pdesetup,sensordata)
             
         if !isnothing(G)
@@ -80,13 +146,64 @@ function train_on_joint_loss!(iterations, α, residual_function::Function, nnset
     return res
 end
 
+
+function train_on_joint_loss!(iterations, α, residual_function::Function, nnsetup::NNSetup, pdesetup::PDESetup, sensordata::SensorData, momentbasedinfo::MomentBasedElementTools, losseval::T, d_used::A,ftol::Float64=0.0,gtol::Float64=0.0,xtol::Float64=0.0) where {T,A}
+
+    len_u = length(nnsetup.θ_u)
+    
+    function fg!(F,G,w)
+        nnsetup.θ_u .= view(w,1:len_u)
+        nnsetup.θ_k .= view(w,(len_u + 1):length(w))
+        dldthetau_r, dldthetak_r, residnorm = fe_residual_loss(
+            residual_function,
+            nnsetup, # neded
+            pdesetup, # needed
+            sensordata, # needed
+            momentbasedinfo,
+            losseval
+            )
+        dldthetau_e, errornorm = fe_error_loss(
+            residual_function,
+            nnsetup, # neded
+            pdesetup, # needed
+            sensordata, # needed
+            momentbasedinfo,
+            d_used
+            )
+        
+            
+        if !isnothing(G)
+            G[1:len_u] .= dldthetau_e .+ α .* dldthetau_r
+            G[(len_u + 1):end] .= α .* dldthetak_r
+            return α*residnorm + errornorm
+        end
+        if !isnothing(F)
+            return α*residnorm + errornorm
+        end
+    end
+    
+    res = Optim.optimize(Optim.only_fg!(fg!), vcat(deepcopy(nnsetup.θ_u), deepcopy(nnsetup.θ_k)),BFGS(), Optim.Options(
+            iterations=iterations, 
+            store_trace=true,
+            f_tol = ftol,
+            x_tol = xtol,
+            g_tol = gtol)
+            )
+    best = Optim.minimizer(res)
+    nnsetup.θ_u .= best[1:length(nnsetup.θ_u)]
+    nnsetup.θ_k .= best[(length(nnsetup.θ_u) + 1):end]
+
+    return res
+end
+
+
 """
     train_feinn!(iter_pattern, joint_alphas, residual_function, nnsetup, pdesetup, sensordata)
 
 Trains the FEINN. iter_pattern should be a length 3 vector with [iterations for data fitting, iterations for initial residual fitting, iteration for joint fitting stages].
 joint_alphas should be a vector with all alphas desired for the joint data fitting step.
 """
-function train_feinn!(iter_pattern, joint_alphas, residual_function, nnsetup, pdesetup, sensordata)
+function train_feinn!(iter_pattern, joint_alphas, residual_function, nnsetup, pdesetup, sensordata,losseval::LossSetup)
 
     print("Training on error...\n\n")
 
@@ -94,13 +211,33 @@ function train_feinn!(iter_pattern, joint_alphas, residual_function, nnsetup, pd
 
     print("Training on FEM residual...\n\n")
 
-    train_on_residual!(iter_pattern[2], residual_function, nnsetup, pdesetup, sensordata)
+    train_on_residual!(iter_pattern[2], residual_function, nnsetup, pdesetup, sensordata,losseval)
 
     for α in joint_alphas
         print("Training on residual and error with alpha = $α ...\n\n")
-        train_on_joint_loss!(iter_pattern[3], α, residual_function, nnsetup, pdesetup, sensordata)
+        train_on_joint_loss!(iter_pattern[3], α, residual_function, nnsetup, pdesetup, sensordata,losseval)
     end
 
     print("Training complete.\n\n")
 
 end
+
+function train_feinn!(iter_pattern, joint_alphas, residual_function, nnsetup, pdesetup, sensordata,d_used::T, losseval::A,ftol::Float64=0.0,gtol::Float64=0.0,xtol::Float64=0.0) where {T,A}
+
+    print("Training on error...\n\n")
+
+    train_on_error!(iter_pattern[1], residual_function, nnsetup, pdesetup, sensordata,d_used,ftol,gtol,xtol)
+
+    print("Training on FEM residual...\n\n")
+
+    train_on_residual!(iter_pattern[2], residual_function, nnsetup, pdesetup, sensordata,losseval,ftol,gtol,xtol)
+
+    for α in joint_alphas
+        print("Training on residual and error with alpha = $α ...\n\n")
+        train_on_joint_loss!(iter_pattern[3], α, residual_function, nnsetup, pdesetup, sensordata,d_used,losseval,ftol,gtol,xtol)
+    end
+
+    print("Training complete.\n\n")
+
+end
+
