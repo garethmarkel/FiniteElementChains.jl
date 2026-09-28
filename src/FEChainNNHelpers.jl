@@ -95,7 +95,7 @@ end
 
 Initializes stock neural networks for u and kappa, with input size = spatial dim, output size = output dim of your FEM problem, nlayers layers, `neurons` neurons per hidden layer, a softplus activation function for hidden layers, and a rectabs output function for the kappa network.
 """
-function initialize_networks(input_size::Int,output_sizes::Vector{Tnt},nlayers::Int,neurons::Int)
+function initialize_networks(input_size::Int,output_sizes::Vector{Int},nlayers::Int,neurons::Int)
     return initialize_networks(input_size,output_sizes,nlayers,neurons,softplus,rect_abs)
 end
 
