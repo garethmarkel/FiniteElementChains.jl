@@ -69,22 +69,11 @@ We may not want the los of the raw residual vector. Technically, that "finite el
 
 For example, in a Poisson problem, the Gram matrix is given by:
 
-\begin{equation}
-G^{\mathrm{P}}_{ij}=\int_\Omega \nabla \phi_j \cdot \nabla \phi_i\,dx
-\end{equation}
+$$G^{\mathrm{P}}_{ij}=\int_\Omega \nabla \phi_j \cdot \nabla \phi_i\,dx$$
 
 In a Maxwell problem, the Gram matrix could be given by given by:
 
-\begin{equation}
-G^{\mathrm{M}}_{ij}=
-\int_\Omega
-\boldsymbol{\phi}_j\cdot\boldsymbol{\phi}_i\,dx
-+
-\int_\Omega
-(\nabla\times\boldsymbol{\phi}_j)
-\cdot
-(\nabla\times\boldsymbol{\phi}_i)\,dx.
-\end{equation}
+$$G^{\mathrm{M}}_{ij}=\int_\Omega\boldsymbol{\phi}_j\cdot\boldsymbol{\phi}_i\,dx+\int_\Omega(\nabla\times\boldsymbol{\phi}_j)\cdot(\nabla\times\boldsymbol{\phi}_i)\,dx$$
 
 These are easy to construct in Gridap. Here's an example for a Maxwell problem.
 

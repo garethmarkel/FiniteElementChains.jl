@@ -12,15 +12,11 @@ For an illustration of what this means, take the following picture. The iron fil
 
 A moment-based element sets each degree of freedom equal to an integral of some function of the underlying field.
 
-$$
-f(u(x))= D_{freedom}
-$$
+$$f(u(x))= D_{freedom}$$
 
 One example is the Nedelec edge element, which sets each degree of freedom equal to the tangential component of the field passing over a given edge.
 
-$$
-\int_e \mathbf{u}\cdot\mathbf{t}\,ds = d_e
-$$
+$$\int_e \mathbf{u}\cdot\mathbf{t}\,ds = d_e$$
 
 ### How are these calculated?
 

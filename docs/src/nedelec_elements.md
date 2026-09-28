@@ -33,15 +33,11 @@ using Optim
 
 Next, we'll set up our test solution. For this problem, the true state and diffusion coefficient are given by:
 
-\begin{equation}
-    u(x,y) = [cos(\pi x)cos(\pi y),sin(\pi x)sin(\pi y)], \ \kappa (x) = \frac{1}{1 + x^2 + y^2 + (x-1)^2 + (y-1)^2}
-\end{equation}
+$$u(x,y) = [cos(\pi x)cos(\pi y),sin(\pi x)sin(\pi y)], \ \kappa (x) = \frac{1}{1 + x^2 + y^2 + (x-1)^2 + (y-1)^2}$$
 
 The underlying physics are represented by the variable coefficient poisson equation:
 
-\begin{equation}
-    \nabla \times \nabla \times u + \kappa u = f \text{ in } \Omega, \qquad u \times n = g \text{ on } \Gamma_D = \partial\Omega.
-\end{equation}
+$$\nabla \times \nabla \times u + \kappa u = f \text{ in } \Omega, \qquad u \times n = g \text{ on } \Gamma_D = \partial\Omega.$$
 
 The domain is given by $[0,1]^2$ and is split into 50x50 quadrilaterals. This is the problem used in section 3.3.2 of Badia et al (2025).
 
